@@ -1,0 +1,270 @@
+### ═══════════════════════════════════════════════════════════
+### FunTech Quiz Backend — API Test Requests
+###
+### Usage:
+###   - VS Code: Install "REST Client" extension, then click "Send Request"
+###   - IntelliJ/WebStorm: Built-in HTTP client
+###   - Postman: Import this file
+###
+### Instructions:
+###   1. Start the server: npm run dev
+###   2. Run the requests IN ORDER (top to bottom)
+###   3. Copy the JWT token from the registration response
+###      and paste it into the @token variable below
+###   4. Copy question IDs from the quiz response for submission
+### ═══════════════════════════════════════════════════════════
+
+### Variables — UPDATE THESE after each step
+@baseUrl = http://localhost:5000
+@adminSecret = CHANGE_ME_generate_a_different_random_string
+@token = PASTE_YOUR_JWT_TOKEN_HERE
+
+### ─────────────────────────────────────────────────────────
+### 1. Health Check
+### ─────────────────────────────────────────────────────────
+
+GET {{baseUrl}}/health
+Content-Type: application/json
+
+### ─────────────────────────────────────────────────────────
+### 2. Add sample questions (Admin — do this before the quiz)
+### ─────────────────────────────────────────────────────────
+
+POST {{baseUrl}}/admin/questions
+Content-Type: application/json
+x-admin-secret: {{adminSecret}}
+
+{
+  "questionText": "What does HTML stand for?",
+  "options": [
+    { "key": "A", "text": "Hyper Text Markup Language" },
+    { "key": "B", "text": "High Tech Modern Language" },
+    { "key": "C", "text": "Home Tool Markup Language" },
+    { "key": "D", "text": "Hyperlink and Text Markup Language" }
+  ],
+  "correctOptionKey": "A",
+  "marks": 1,
+  "order": 1
+}
+
+###
+
+POST {{baseUrl}}/admin/questions
+Content-Type: application/json
+x-admin-secret: {{adminSecret}}
+
+{
+  "questionText": "Which language runs in a web browser natively?",
+  "options": [
+    { "key": "A", "text": "Java" },
+    { "key": "B", "text": "C" },
+    { "key": "C", "text": "Python" },
+    { "key": "D", "text": "JavaScript" }
+  ],
+  "correctOptionKey": "D",
+  "marks": 1,
+  "order": 2
+}
+
+###
+
+POST {{baseUrl}}/admin/questions
+Content-Type: application/json
+x-admin-secret: {{adminSecret}}
+
+{
+  "questionText": "What does CSS stand for?",
+  "options": [
+    { "key": "A", "text": "Cascading Style Sheets" },
+    { "key": "B", "text": "Creative Style System" },
+    { "key": "C", "text": "Computer Style Sheets" },
+    { "key": "D", "text": "Colorful Style Sheets" }
+  ],
+  "correctOptionKey": "A",
+  "marks": 1,
+  "order": 3
+}
+
+###
+
+POST {{baseUrl}}/admin/questions
+Content-Type: application/json
+x-admin-secret: {{adminSecret}}
+
+{
+  "questionText": "What is the correct syntax for referring to an external script?",
+  "options": [
+    { "key": "A", "text": "<script href='app.js'>" },
+    { "key": "B", "text": "<script name='app.js'>" },
+    { "key": "C", "text": "<script src='app.js'>" },
+    { "key": "D", "text": "<script file='app.js'>" }
+  ],
+  "correctOptionKey": "C",
+  "marks": 1,
+  "order": 4
+}
+
+###
+
+POST {{baseUrl}}/admin/questions
+Content-Type: application/json
+x-admin-secret: {{adminSecret}}
+
+{
+  "questionText": "Which HTML attribute is used to define inline styles?",
+  "options": [
+    { "key": "A", "text": "class" },
+    { "key": "B", "text": "font" },
+    { "key": "C", "text": "styles" },
+    { "key": "D", "text": "style" }
+  ],
+  "correctOptionKey": "D",
+  "marks": 1,
+  "order": 5
+}
+
+### ─────────────────────────────────────────────────────────
+### 3. List all questions (Admin — verify they were created)
+### ─────────────────────────────────────────────────────────
+
+GET {{baseUrl}}/admin/questions
+x-admin-secret: {{adminSecret}}
+
+### ─────────────────────────────────────────────────────────
+### 4. Register a participant
+###    ⚠️  Copy the "token" value from the response and paste
+###        it into the @token variable at the top of this file
+### ─────────────────────────────────────────────────────────
+
+POST {{baseUrl}}/api/register
+Content-Type: application/json
+
+{
+  "name": "Test Student",
+  "email": "test@college.edu",
+  "rollNumber": "CS2023001"
+}
+
+### ─────────────────────────────────────────────────────────
+### 5. Try registering with the same email (should fail 409)
+### ─────────────────────────────────────────────────────────
+
+POST {{baseUrl}}/api/register
+Content-Type: application/json
+
+{
+  "name": "Test Student Again",
+  "email": "test@college.edu"
+}
+
+### ─────────────────────────────────────────────────────────
+### 6. Fetch quiz questions (JWT required)
+###    ⚠️  Copy the question _id values for step 7
+### ─────────────────────────────────────────────────────────
+
+GET {{baseUrl}}/api/quiz
+Authorization: Bearer {{token}}
+
+### ─────────────────────────────────────────────────────────
+### 7. Submit answers
+###    ⚠️  Replace questionId values with actual _ids from step 6
+### ─────────────────────────────────────────────────────────
+
+POST {{baseUrl}}/api/quiz/submit
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "answers": [
+    { "questionId": "REPLACE_WITH_QUESTION_1_ID", "selectedOptionKey": "A" },
+    { "questionId": "REPLACE_WITH_QUESTION_2_ID", "selectedOptionKey": "D" },
+    { "questionId": "REPLACE_WITH_QUESTION_3_ID", "selectedOptionKey": "A" },
+    { "questionId": "REPLACE_WITH_QUESTION_4_ID", "selectedOptionKey": "C" },
+    { "questionId": "REPLACE_WITH_QUESTION_5_ID", "selectedOptionKey": "D" }
+  ],
+  "timeTakenSeconds": 420
+}
+
+### ─────────────────────────────────────────────────────────
+### 8. Try submitting again (should fail 409)
+### ─────────────────────────────────────────────────────────
+
+POST {{baseUrl}}/api/quiz/submit
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "answers": [
+    { "questionId": "REPLACE_WITH_QUESTION_1_ID", "selectedOptionKey": "B" }
+  ],
+  "timeTakenSeconds": 500
+}
+
+### ─────────────────────────────────────────────────────────
+### 9. Get leaderboard (Admin)
+### ─────────────────────────────────────────────────────────
+
+GET {{baseUrl}}/admin/results
+x-admin-secret: {{adminSecret}}
+
+### ─────────────────────────────────────────────────────────
+### 10. Get all participants (Admin)
+### ─────────────────────────────────────────────────────────
+
+GET {{baseUrl}}/admin/participants
+x-admin-secret: {{adminSecret}}
+
+### ─────────────────────────────────────────────────────────
+### 11. Update a question (Admin)
+###     Replace :id with actual question _id
+### ─────────────────────────────────────────────────────────
+
+PUT {{baseUrl}}/admin/questions/REPLACE_WITH_QUESTION_ID
+Content-Type: application/json
+x-admin-secret: {{adminSecret}}
+
+{
+  "marks": 2
+}
+
+### ─────────────────────────────────────────────────────────
+### 12. Delete a question (Admin)
+###     Replace :id with actual question _id
+### ─────────────────────────────────────────────────────────
+
+DELETE {{baseUrl}}/admin/questions/REPLACE_WITH_QUESTION_ID
+x-admin-secret: {{adminSecret}}
+
+### ─────────────────────────────────────────────────────────
+### 13. Validation error tests
+### ─────────────────────────────────────────────────────────
+
+### Missing name
+POST {{baseUrl}}/api/register
+Content-Type: application/json
+
+{
+  "email": "noname@college.edu"
+}
+
+###
+
+### Invalid email
+POST {{baseUrl}}/api/register
+Content-Type: application/json
+
+{
+  "name": "Bad Email",
+  "email": "not-an-email"
+}
+
+###
+
+### No auth token
+GET {{baseUrl}}/api/quiz
+
+###
+
+### Wrong admin secret
+GET {{baseUrl}}/admin/questions
+x-admin-secret: wrong-secret

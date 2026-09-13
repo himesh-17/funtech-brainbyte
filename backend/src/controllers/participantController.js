@@ -1,0 +1,220 @@
+const Participant = require('../models/Participant');
+const Question = require('../models/Question');
+const generateToken = require('../utils/generateToken');
+
+/**
+ * POST /api/register
+ * Register a new participant (no password).
+ * Returns a JWT for subsequent authenticated requests.
+ */
+async function register(req, res) {
+  const { name, email, rollNumber } = req.body;
+
+  // Check if a participant with this email already exists.
+  // We also catch the unique-index E11000 below for race-condition safety,
+  // but this pre-check gives a much better error message.
+  const existing = await Participant.findOne({ email: email.toLowerCase() });
+
+  if (existing) {
+    // Differentiate between "registered but not submitted" and "already submitted"
+    const message = existing.submitted
+      ? 'You have already attempted this quiz.'
+      : 'This email is already registered. Use your existing token to continue.';
+
+    return res.status(409).json({
+      success: false,
+      message,
+    });
+  }
+
+  let participant;
+  try {
+    participant = await Participant.create({
+      name,
+      email: email.toLowerCase(),
+      rollNumber: rollNumber || null,
+    });
+  } catch (err) {
+    // Race condition: another request created this email between our check and insert.
+    // The unique index catches it via E11000.
+    if (err.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: 'This email is already registered.',
+      });
+    }
+    throw err; // Re-throw for global error handler
+  }
+
+  const token = generateToken(participant);
+
+  res.status(201).json({
+    success: true,
+    message: 'Registration successful',
+    data: {
+      participant: participant.toPublicJSON(),
+      token,
+      tokenExpiresIn: process.env.JWT_EXPIRES_IN || '60m',
+    },
+  });
+}
+
+/**
+ * GET /api/quiz
+ * Returns quiz questions WITHOUT correct answers.
+ * Requires JWT authentication.
+ */
+async function getQuiz(req, res) {
+  // Check if participant has already submitted
+  if (req.participant.submitted) {
+    return res.status(403).json({
+      success: false,
+      message: 'You have already submitted this quiz. Questions are no longer available.',
+    });
+  }
+
+  let questions = await Question.find({}).sort({ order: 1 }).lean();
+
+  // Optionally shuffle questions
+  if (process.env.SHUFFLE_QUESTIONS === 'true') {
+    questions = shuffleArray(questions);
+  }
+
+  // Strip correct answers before sending to client
+  const clientQuestions = questions.map((q) => ({
+    _id: q._id,
+    questionText: q.questionText,
+    options: q.options, // { key, text } — no correctOptionKey
+    marks: q.marks,
+    order: q.order,
+  }));
+
+  res.status(200).json({
+    success: true,
+    data: {
+      questions: clientQuestions,
+      totalQuestions: clientQuestions.length,
+      timeLimitSeconds: parseInt(process.env.QUIZ_TIME_LIMIT_SECONDS, 10) || 1800,
+    },
+  });
+}
+
+/**
+ * POST /api/quiz/submit
+ * Submit all answers at once. Atomic and idempotent.
+ * Requires JWT authentication.
+ */
+async function submitAnswers(req, res) {
+  const { answers, timeTakenSeconds } = req.body;
+  const participantId = req.participant._id;
+
+  // Fetch all questions to calculate score server-side
+  const questions = await Question.find({}).lean();
+
+  if (questions.length === 0) {
+    return res.status(500).json({
+      success: false,
+      message: 'No questions found in the database. Contact the organizer.',
+    });
+  }
+
+  // Build a lookup map: questionId → correctOptionKey & marks
+  const questionMap = new Map();
+  for (const q of questions) {
+    questionMap.set(q._id.toString(), {
+      correctOptionKey: q.correctOptionKey,
+      marks: q.marks,
+    });
+  }
+
+  // Calculate score and build graded answers array
+  let totalScore = 0;
+  const gradedAnswers = [];
+
+  for (const answer of answers) {
+    const question = questionMap.get(answer.questionId);
+    if (!question) {
+      // Skip unknown questionIds — don't crash, just ignore
+      continue;
+    }
+
+    const isCorrect = answer.selectedOptionKey === question.correctOptionKey;
+    if (isCorrect) {
+      totalScore += question.marks;
+    }
+
+    gradedAnswers.push({
+      questionId: answer.questionId,
+      selectedOptionKey: answer.selectedOptionKey,
+      isCorrect,
+    });
+  }
+
+  // ── ATOMIC CONDITIONAL UPDATE ──────────────────────────────
+  // This is the critical concurrency-safe operation.
+  // findOneAndUpdate with { submitted: false } precondition ensures
+  // only the FIRST submit succeeds. A second concurrent request
+  // finds no matching document and gets null back → 409.
+  const updatedParticipant = await Participant.findOneAndUpdate(
+    {
+      _id: participantId,
+      submitted: false, // Only match if not yet submitted
+    },
+    {
+      $set: {
+        submitted: true,
+        score: totalScore,
+        timeTakenSeconds,
+        submittedAt: new Date(),
+        answers: gradedAnswers,
+      },
+    },
+    {
+      new: true, // Return the updated document
+    }
+  );
+
+  // If null, the document either doesn't exist or was already submitted
+  if (!updatedParticipant) {
+    return res.status(409).json({
+      success: false,
+      message: 'Already submitted. Each participant can only submit once.',
+    });
+  }
+
+  // Calculate max possible score for context
+  const maxPossibleScore = questions.reduce((sum, q) => sum + q.marks, 0);
+
+  res.status(200).json({
+    success: true,
+    message: 'Quiz submitted successfully',
+    data: {
+      score: totalScore,
+      maxPossibleScore,
+      totalQuestions: questions.length,
+      attempted: gradedAnswers.length,
+      correct: gradedAnswers.filter((a) => a.isCorrect).length,
+      incorrect: gradedAnswers.filter((a) => !a.isCorrect).length,
+      timeTakenSeconds,
+      breakdown: gradedAnswers.map((a) => ({
+        questionId: a.questionId,
+        selectedOptionKey: a.selectedOptionKey,
+        isCorrect: a.isCorrect,
+      })),
+    },
+  });
+}
+
+// ── Helper ─────────────────────────────────────────────────
+/**
+ * Fisher-Yates shuffle (in-place, returns mutated array).
+ */
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+module.exports = { register, getQuiz, submitAnswers };
