@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Cpu, Wifi, Activity, Terminal } from 'lucide-react';
+import funtechLogo from "../assets/funtech-logo2.png";
 import axios from 'axios';
 
 export default function Navbar({ participant, stage, onToggleAdmin }) {
@@ -29,11 +30,20 @@ export default function Navbar({ participant, stage, onToggleAdmin }) {
         
         {/* Brand Logo & Name */}
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-indigo-500 to-purple-600 p-[1px] shadow-lg shadow-cyan-500/20">
+          {/* <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 via-indigo-500 to-purple-600 p-[1px] shadow-lg shadow-cyan-500/20">
             <div className="w-full h-full bg-slate-950 rounded-[11px] flex items-center justify-center">
               <Cpu className="w-5 h-5 text-cyan-400 animate-pulse" />
             </div>
+          </div> */}
+          <div className="w-10 h-10 rounded-xl ">
+          <div className="w-full h-full bg-slate-950 rounded-[11px] flex items-center justify-center overflow-hidden">
+            <img
+              src={funtechLogo}
+              alt="FunTech Logo"
+              className="w-9 h-9 object-contain"
+            />
           </div>
+        </div>
           <div>
             <div className="flex items-center space-x-2">
               <span className="font-heading text-lg font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-sky-200 to-purple-400">
