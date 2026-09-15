@@ -2,6 +2,69 @@ import React, { useState } from 'react';
 import { User, Mail, Hash, ArrowRight, ShieldAlert, Sparkles, Code2, Rocket } from 'lucide-react';
 import axios from 'axios';
 
+const REGISTERED_STUDENTS = [
+  { email: 'test1@test.com', rollNumber: 'TEST001' },
+  { email: 'test2@test.com', rollNumber: 'TEST002' },
+  { email: 'test3@test.com', rollNumber: 'TEST003' },
+  { email: '24it10am14@mitsgwl.ac.in', rollNumber: 'BTIT24O1014' },
+  { email: '24it10ay40@mitsgwl.ac.in', rollNumber: 'BTIT24O1040' },
+  { email: 'uditsahu553@gmail.com', rollNumber: 'BTCD24O1071' },
+  { email: '25cb1ma75@mitsgwl.ac.in', rollNumber: 'BTCB25O1075' },
+  { email: '25cs1sh134@mitsgwl.ac.in', rollNumber: 'BTCS25O1134' },
+  { email: '25am1ba17@mitsgwl.ac.in', rollNumber: 'BTAM25O1017' },
+  { email: '25cb1ha55@mitsgwl.ac.in', rollNumber: 'BTCB25O1055' },
+  { email: '26tc1al11@mitsgwl.ac.in', rollNumber: 'BTTC26O1011' },
+  { email: 'dakshsharma09008@gmail.com', rollNumber: 'BTCB25O1046' },
+  { email: '25cs1ma78@mitsgwl.ac.in', rollNumber: 'BTCS25O1078' },
+  { email: '26tc1va146@mitsgwl.ac.in', rollNumber: 'BTTC26O1146' },
+  { email: 'adityavishnusoni@gmail.com', rollNumber: 'BTCS26O1008' },
+  { email: 'tr4719419@gmail.com', rollNumber: 'BTEC2601073' },
+  { email: 'hemantyadav75853@gmail.com', rollNumber: 'BTEC26O1043' },
+  { email: '26cb1as18@mitsgwl.ac.in', rollNumber: 'BTCB26O1033' },
+  { email: '26cs1vi148@mitsgwl.ac.in', rollNumber: 'BTCS2601148' },
+  { email: 'krissrajput4151@gmail.com', rollNumber: 'BTCB26O1036' },
+  { email: 'mansivermakvs@gmail.com', rollNumber: 'BTCB26O1038' },
+  { email: '26cd1ha55@mitsgwl.ac.in', rollNumber: 'BTCD26O1055' },
+  { email: '26cs1sa122@mitsgwl.ac.in', rollNumber: 'BTCS26O1122' },
+  { email: '26ai1sh124@mitsgwl.ac.in', rollNumber: 'BTAI26O1124' },
+  { email: '25ec1ya72@mitsgwl.ac.in', rollNumber: 'BTEC25O1072' },
+  { email: '26cs1vi150@mitsgwl.ac.in', rollNumber: 'BTCS2601150' },
+  { email: 'santankumarmitsg@gmail.com', rollNumber: 'BTCS26O1120' },
+  { email: '25ec1jy26@mitsgwl.ac.in', rollNumber: 'BTEC25O1026' },
+  { email: '26cd1bh41@gmail.com', rollNumber: 'BTCD26O1041' },
+  { email: 'sagardehariya222@gmail.com', rollNumber: 'BTCS2601114' },
+  { email: 'abhinatbhadoria@gmail.com', rollNumber: 'BTCS26O1003' },
+  { email: '25ai1ni89@mitsgwl.ac.in', rollNumber: 'BTAI25O1089' },
+  { email: '26ai1pr86@mitsgwl.ac.in', rollNumber: 'BTAI26O1086' },
+  { email: '26ai1pa84@mitsgwl.ac.in', rollNumber: 'BTAI26O1084' },
+  { email: '26tc1ro110@mitsgwl.ac.in', rollNumber: 'BTTC26O1110' },
+  { email: 'aryanrathore3012@gmail.com', rollNumber: 'BTAD26O1001' },
+  { email: 'singhsujeetsingh364@gmail.com', rollNumber: 'BTAD26O1072' },
+  { email: 'mishrachandramouli383@gmail.com', rollNumber: 'BTAD26O1012' },
+  { email: '26el1ad13@mitsgwl.ac.in', rollNumber: 'BTEL26O1013' },
+  { email: '26it1ra107@mitsgwl.ac.in', rollNumber: 'BTIT26O1107' },
+  { email: 'akashdhakad8358@gmail.com', rollNumber: 'BTAI26O1009' },
+  { email: 'sonikrish911@gmail.com', rollNumber: 'BTET24O1066' },
+  { email: '26tc1kr72@mitsgwl.ac.in', rollNumber: 'BTTC26O1072' },
+  { email: '26mc1de41@mitsgwl.ac.in', rollNumber: 'BTMC26O1041' },
+  { email: 'avinash1919982006@gmail.com', rollNumber: 'BTEC25O1017' },
+  { email: 'epicnest777@gmail.com', rollNumber: 'BTCS26O1124' },
+  { email: 'mayankbisen27@gmail.com', rollNumber: 'BTET25O1080' },
+  { email: '24et10ma74@mitsgwl.ac.in', rollNumber: 'BTET24O1074' },
+  { email: '25am1ma43@mitsgwl.ac.in', rollNumber: 'BTAM25O1043' },
+  { email: '25am1ji35@mitsgwl.ac.in', rollNumber: 'BTAM25O1035' },
+  { email: '25am1an13@mitsgwl.ac.in', rollNumber: 'BTAM25O1013' },
+  { email: 'Vishnutomar9870@gmail.com', rollNumber: 'BTTC26O1151' },
+  { email: 'vansh17jain@gmail.com', rollNumber: 'BTAI25O1150' },
+  { email: '25am1ar15@mitsgwl.ac.in', rollNumber: 'BTAM25O1015' },
+  { email: '25am1de22@mitsgwl.ac.in', rollNumber: 'BTAM25O1022' },
+  { email: '26tc1ny96@mitsgwl.ac.in', rollNumber: 'BTTC26O1096' },
+  { email: '26tc1ni95@mitsgwl.ac.in', rollNumber: 'BTTC26O1095' },
+  { email: 'kt414378@gmail.com', rollNumber: 'BTEC26O1047 ' },
+  { email: '26tc1ni94@mitsgwl.ac.in', rollNumber: 'BTTC26O1094' },
+  { email: 'dangishriom251@gmail.com', rollNumber: 'BTAM25O1061' },
+];
+
 export default function RegistrationCard({ onRegisterSuccess }) {
   const [formData, setFormData] = useState({
     name: '',
@@ -20,6 +83,21 @@ export default function RegistrationCard({ onRegisterSuccess }) {
     e.preventDefault();
     setLoading(true);
     setErrorMsg('');
+
+    const enteredEmail = formData.email.trim().toLowerCase();
+    const enteredRoll = formData.rollNumber.trim().toUpperCase();
+
+    const match = REGISTERED_STUDENTS.find(
+      (s) =>
+        s.email.toLowerCase() === enteredEmail &&
+        s.rollNumber.toUpperCase() === enteredRoll
+    );
+
+    if (!match) {
+      setErrorMsg('Your email and Roll/ID Number do not match our records. Please verify your details or contact the organizer.');
+      setLoading(false);
+      return; // Stop here, never hit backend
+    }
 
     try {
       const response = await axios.post('/api/register', {

@@ -134,6 +134,28 @@ export default function ResultCard({ resultData, participant, onRetakeAttempt })
           </p>
         </div>
 
+        {/* Recruitment CTA */}
+        <div className="mt-4 p-6 rounded-2xl bg-gradient-to-br from-slate-900 via-cyan-950/30 to-purple-950/30 border border-cyan-500/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-start space-x-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-purple-500 flex items-center justify-center shrink-0 shadow-lg shadow-cyan-500/20">
+              <Sparkles className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-white font-heading">Want to build the next BrainByte?</p>
+              <p className="text-xs text-slate-400 mt-0.5">FunTech Society is recruiting developers, designers & event leads for 2026–27.</p>
+            </div>
+          </div>
+          <a
+            href="https://forms.gle/TjixjWbT5DgLwoXe8"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shrink-0 flex items-center space-x-2 px-5 py-2.5 rounded-xl font-heading font-semibold text-sm text-slate-950 bg-gradient-to-r from-cyan-400 via-sky-300 to-indigo-300 hover:from-cyan-300 hover:to-indigo-200 active:scale-[0.99] shadow-lg shadow-cyan-500/25 transition"
+          >
+            <span>Join the Team</span>
+            <ArrowRight className="w-4 h-4" />
+          </a>
+        </div>
+
       </div>
     </div>
   );
