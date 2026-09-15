@@ -16,15 +16,25 @@ async function register(req, res) {
   const existing = await Participant.findOne({ email: email.toLowerCase() });
 
   if (existing) {
-    // Differentiate between "registered but not submitted" and "already submitted"
-    const message = existing.submitted
-      ? 'You have already attempted this quiz.'
-      : 'This email is already registered. Use your existing token to continue.';
-
-    return res.status(409).json({
-      success: false,
-      message,
-    });
+    if (existing.submitted) {
+      return res.status(409).json({
+        success: false,
+        message: 'You have already attempted this quiz.',
+      });
+    } else {
+      // The user is already registered but hasn't submitted yet.
+      // Generate a new token and let them resume seamlessly.
+      const token = generateToken(existing);
+      return res.status(200).json({
+        success: true,
+        message: 'Welcome back! Resuming your session.',
+        data: {
+          participant: existing.toPublicJSON(),
+          token,
+          tokenExpiresIn: process.env.JWT_EXPIRES_IN || '60m',
+        },
+      });
+    }
   }
 
   let participant;

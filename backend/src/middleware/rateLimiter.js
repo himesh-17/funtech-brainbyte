@@ -7,7 +7,7 @@ const rateLimit = require('express-rate-limit');
  */
 const registrationLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10,
+  max: 5,
   standardHeaders: true, // Return rate limit info in RateLimit-* headers
   legacyHeaders: false,
   message: {

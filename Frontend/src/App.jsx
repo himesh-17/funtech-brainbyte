@@ -50,6 +50,8 @@ export default function App() {
         if (savedAnswers) {
           setAnswersMap(JSON.parse(savedAnswers));
         }
+        // Auto-resume past registration if session exists
+        setStage('RULES');
       } catch (e) {}
     }
   }, []);
@@ -74,6 +76,12 @@ export default function App() {
   const handleRegisterSuccess = (newParticipant, token) => {
     setParticipant(newParticipant);
     setJwtToken(token);
+    
+    // Clear any previous session's quiz data to prevent cross-contamination
+    setAnswersMap({});
+    localStorage.removeItem('funtech_quiz_answers');
+    localStorage.removeItem('funtech_quiz_start_time');
+
     localStorage.setItem('funtech_quiz_token', token);
     localStorage.setItem('funtech_quiz_participant', JSON.stringify(newParticipant));
     setStage('RULES');
@@ -95,7 +103,16 @@ export default function App() {
         const { questions: fetchedQuestions, timeLimitSeconds: limit } = res.data.data;
         setQuestions(fetchedQuestions || []);
         setTimeLimitSeconds(limit || 1800);
-        setStartTime(Date.now());
+        
+        let sessionStartTime = Date.now();
+        const savedStartTime = localStorage.getItem('funtech_quiz_start_time');
+        if (savedStartTime) {
+          sessionStartTime = parseInt(savedStartTime, 10);
+        } else {
+          localStorage.setItem('funtech_quiz_start_time', sessionStartTime.toString());
+        }
+        
+        setStartTime(sessionStartTime);
         setStage('QUIZ');
         antiCheat.enterFullscreen();
       }
@@ -170,6 +187,13 @@ export default function App() {
       if (res.data && res.data.success) {
         setResultData(res.data.data);
         antiCheat.exitFullscreen();
+        
+        // Clear local storage after successful submission so another user starts fresh
+        localStorage.removeItem('funtech_quiz_answers');
+        localStorage.removeItem('funtech_quiz_token');
+        localStorage.removeItem('funtech_quiz_participant');
+        localStorage.removeItem('funtech_quiz_start_time');
+
         if (!isAutoSubmit) {
           setStage('RESULT');
         }
